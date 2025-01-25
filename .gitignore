@@ -1,0 +1,16 @@
+/node_modules
+/dist
+/build
+/public/fonts
+/public/images
+/public/videos
+/public/sounds
+/public/icons
+/public/favicon.ico
+/public/manifest.json
+/public/robots.txt
+/public/sitemap.xml
+/public/favicon.ico
+/public/robots.txt
+/public/sitemap.xml
+/.next

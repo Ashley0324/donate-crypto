@@ -27,11 +27,15 @@ export default function DonatePage() {
     setIsLoading(true)
 
     try {
-      const provider = new ethers.providers.Web3Provider(window.ethereum)
-      const signer = provider.getSigner()
+      if(!window.ethereum) {
+        throw new Error("请安装MetaMask或其他Web3钱包")
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      const signer = await provider.getSigner()
       const contract = new ethers.Contract(USDT_CONTRACT_ADDRESS, USDT_ABI, signer)
 
-      const amountWei = ethers.utils.parseUnits(amount, 18)
+      const amountWei = ethers.parseUnits(amount, 18)
 
       const tx = await contract.transfer(DONATION_RECIPIENT_ADDRESS, amountWei)
       await tx.wait()
@@ -45,11 +49,13 @@ export default function DonatePage() {
     } catch (error: any) {
       console.error("Donation error:", error)
       let errorMessage = "发生错误，请稍后再试"
-      if (error.message.includes("insufficient balance")) {
+
+      if (error.code === "INSUFFICIENT_FUNDS") {
         errorMessage = "USDT 余额不足，请确保您有足够的 USDT"
-      } else if (error.message.includes("user rejected")) {
+      } else if (error.code === "ACTION_REJECTED") {
         errorMessage = "您取消了交易"
       }
+
       toast({
         variant: "destructive",
         title: "捐赠失败",
