@@ -58,6 +58,7 @@ export default function Page() {
                 "连接钱包"
               )}
             </Button>
+             <h4 className="text-4xl md:text-xs font-bold text-[#c6f432] mb-12">LP地址：0x858b901D85310d0706CD9F9bE395a8c46168A7F8</h4>
           )
         }}
       </ConnectButton.Custom>
