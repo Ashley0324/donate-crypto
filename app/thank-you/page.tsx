@@ -25,8 +25,8 @@ function ClientContent() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <h1 className="text-4xl md:text-5xl font-bold text-[#ffffff] mb-8">感谢您的捐赠！</h1>
-      <p className="text-xl md:text-2xl text-[#979797] mb-8">您捐赠了 {amount} USDT 来支持 TAO AI Agent 的发展。</p>
+      <h1 className="text-4xl md:text-5xl font-bold text-[#ffffff] mb-8">🎉恭喜您成为TAO的创世成员！</h1>
+      <p className="text-xl md:text-2xl text-[#979797] mb-8">您支付了 {amount} USDT 来支持 TAO AI Agent 的发展。</p>
       <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
         <Button
           onClick={() => setShowConfetti(true)}
