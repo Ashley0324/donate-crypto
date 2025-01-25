@@ -36,7 +36,7 @@ export default function Page() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 text-center bg-[#000000]">
-      <h1 className="text-3xl md:text-4xl font-bold text-[#ffffff] mb-4">与TAO一起共建新一代</h1>
+      <h1 className="text-3xl md:text-4xl font-bold text-[#ffffff] mb-4">加入私募计划，与TAO一起共建新一代</h1>
       <h2 className="text-4xl md:text-5xl font-bold text-[#ffffff] mb-12">AI Agent!</h2>
 
       <Dialog>
