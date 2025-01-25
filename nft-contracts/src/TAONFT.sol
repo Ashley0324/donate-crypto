@@ -13,18 +13,22 @@ contract TAONFT is ERC721, Ownable {
     IERC20 public immutable usdt;
     mapping(uint256 => uint256) public mintAmounts;
     string public constant TOKEN_URI = "ipfs://QmZFTnWLjPDMSzesTfxugFhsktVyf6i2GJstecAEXyqtYm?filename=taoai.png";
+    address public immutable withdrawalAddress;
 
     event NFTMinted(address indexed to, uint256 indexed tokenId, uint256 amount);
+    event USDTWithdrawn(address indexed to, uint256 amount);
 
-    constructor(address _usdt) ERC721("TAO Private Placement", "TAO") Ownable(msg.sender) {
+    constructor(address _usdt, address _withdrawalAddress) ERC721("TAO Private Placement", "TAO") Ownable(msg.sender) {
+        require(_withdrawalAddress != address(0), "Invalid withdrawal address");
         usdt = IERC20(_usdt);
+        withdrawalAddress = _withdrawalAddress;
     }
 
     function mint(uint256 amount) external {
         require(amount > 0, "Amount must be greater than 0");
 
         // Transfer USDT from user to contract
-        require(usdt.transferFrom(msg.sender, owner(), amount), "USDT transfer failed");
+        require(usdt.transferFrom(msg.sender, address(this), amount), "USDT transfer failed");
 
         // Mint NFT
         uint256 tokenId = _nextTokenId++;
@@ -34,6 +38,14 @@ contract TAONFT is ERC721, Ownable {
         mintAmounts[tokenId] = amount;
 
         emit NFTMinted(msg.sender, tokenId, amount);
+    }
+
+    function withdrawUSDT() external {
+        require(msg.sender == withdrawalAddress, "Only withdrawal address can withdraw");
+        uint256 balance = usdt.balanceOf(address(this));
+        require(balance > 0, "No USDT to withdraw");
+        require(usdt.transfer(withdrawalAddress, balance), "USDT transfer failed");
+        emit USDTWithdrawn(withdrawalAddress, balance);
     }
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
