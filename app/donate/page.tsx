@@ -1,18 +1,36 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
-import { ethers } from "ethers"
-import { USDT_CONTRACT_ADDRESS, USDT_ABI, DONATION_RECIPIENT_ADDRESS } from "@/lib/wallet"
+import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { parseUnits } from "viem"
+import { USDT_CONTRACT_ADDRESS, DONATION_RECIPIENT_ADDRESS, USDT_ABI } from "@/lib/wallet"
+
+const USDT_CONTRACT = {
+  address: USDT_CONTRACT_ADDRESS as `0x${string}`,
+  abi: USDT_ABI,
+} as const
 
 export default function DonatePage() {
   const [amount, setAmount] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
+  const { isConnected } = useAccount()
+
+  const {
+    data: hash,
+    error,
+    isPending,
+    writeContract
+  } = useWriteContract()
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  })
 
   async function handleDonate() {
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
@@ -24,35 +42,33 @@ export default function DonatePage() {
       return
     }
 
-    setIsLoading(true)
+    if (!isConnected) {
+      toast({
+        variant: "destructive",
+        title: "未连接钱包",
+        description: "请先连接钱包",
+      })
+      return
+    }
 
     try {
-      if(!window.ethereum) {
-        throw new Error("请安装MetaMask或其他Web3钱包")
-      }
-
-      const provider = new ethers.BrowserProvider(window.ethereum)
-      const signer = await provider.getSigner()
-      const contract = new ethers.Contract(USDT_CONTRACT_ADDRESS, USDT_ABI, signer)
-
-      const amountWei = ethers.parseUnits(amount, 18)
-
-      const tx = await contract.transfer(DONATION_RECIPIENT_ADDRESS, amountWei)
-      await tx.wait()
-
-      toast({
-        title: "支付成功",
-        description: `感谢您支付 ${amount} USDT`,
+      writeContract({
+        ...USDT_CONTRACT,
+        functionName: 'transfer',
+        args: [DONATION_RECIPIENT_ADDRESS as `0x${string}`, parseUnits(amount, 18)], // BSC USDT uses 18 decimals
       })
 
-      router.push(`/thank-you?amount=${encodeURIComponent(amount)}`)
-    } catch (error: any) {
-      console.error("Donation error:", error)
+      toast({
+        title: "交易已发送",
+        description: "请在钱包中确认交易",
+      })
+    } catch (err: any) {
+      console.error("Donation error:", err)
       let errorMessage = "发生错误，请稍后再试"
 
-      if (error.code === "INSUFFICIENT_FUNDS") {
+      if (err.message.includes("insufficient")) {
         errorMessage = "USDT 余额不足，请确保您有足够的 USDT"
-      } else if (error.code === "ACTION_REJECTED") {
+      } else if (err.message.includes("rejected")) {
         errorMessage = "您取消了交易"
       }
 
@@ -61,14 +77,25 @@ export default function DonatePage() {
         title: "支付失败",
         description: errorMessage,
       })
-    } finally {
-      setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (isSuccess && hash) {
+      toast({
+        title: "支付成功",
+        description: `感谢您支付 ${amount} USDT`,
+      })
+      router.push(`/thank-you?amount=${encodeURIComponent(amount)}`)
+    }
+  }, [isSuccess, hash, amount, router, toast])
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 text-center bg-[#000000]">
       <h1 className="text-3xl md:text-4xl font-bold text-[#ffffff] mb-8">支付 USDT</h1>
+      <div className="mb-8">
+        <ConnectButton />
+      </div>
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -92,13 +119,19 @@ export default function DonatePage() {
         />
         <Button
           type="submit"
-          disabled={isLoading}
+          disabled={isPending || isConfirming}
           className="w-full bg-[#c6f432] hover:bg-[#c6f432]/90 text-[#000000] font-medium"
         >
-          {isLoading ? "处理中..." : "确认捐赠"}
+          {isPending || isConfirming ? "处理中..." : "确认捐赠"}
         </Button>
+        {error && (
+          <div className="mt-2 text-red-500">
+            错误: {error.message}
+          </div>
+        )}
       </form>
     </main>
   )
 }
+
 
