@@ -1,8 +1,10 @@
 import "./types"
+import { getCurrentNetwork } from './config'
 
 export type WalletType = "metamask" | "tp"
 
-const BSC_CHAIN_ID = "0x38" // BSC Mainnet
+const network = getCurrentNetwork()
+const BSC_CHAIN_ID = `0x${network.chainId.toString(16)}` // Convert chainId to hex
 
 export async function connectWallet(type: WalletType): Promise<string> {
   let provider: any
@@ -48,19 +50,19 @@ async function switchToBSCNetwork(provider: any) {
           params: [
             {
               chainId: BSC_CHAIN_ID,
-              chainName: "Binance Smart Chain",
+              chainName: network.name,
               nativeCurrency: {
                 name: "BNB",
                 symbol: "BNB",
                 decimals: 18,
               },
-              rpcUrls: ["https://bsc-dataseed.binance.org/"],
-              blockExplorerUrls: ["https://bscscan.com/"],
+              rpcUrls: [network.rpcUrl],
+              blockExplorerUrls: [network.blockExplorer],
             },
           ],
         })
       } catch (addError) {
-        throw new Error("无法添加或切换到 BSC 网络")
+        throw new Error(`无法添加或切换到 ${network.name}`)
       }
     } else {
       throw switchError
@@ -68,8 +70,8 @@ async function switchToBSCNetwork(provider: any) {
   }
 }
 
-export const USDT_CONTRACT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955" // BSC USDT
-export const NFT_CONTRACT_ADDRESS = "YOUR_DEPLOYED_NFT_CONTRACT_ADDRESS" // TODO: Replace with actual address
+export const USDT_CONTRACT_ADDRESS = network.usdtAddress
+export const NFT_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS || network.nftAddress || ''
 
 export const USDT_ABI = [
   {

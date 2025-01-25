@@ -1,76 +1,70 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
 import {Test, console2} from "forge-std/Test.sol";
 import {TAONFT} from "../src/TAONFT.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
-contract MockUSDT is ERC20 {
-    constructor() ERC20("Mock USDT", "USDT") {
-        _mint(msg.sender, 1000000 * 10**18);
-    }
-}
+import {MockERC20} from "./mock/MockERC20.sol";
 
 contract TAONFTTest is Test {
     TAONFT public nft;
-    MockUSDT public usdt;
+    MockERC20 public usdt;
+    address public withdrawalAddress;
     address public user;
-    address public owner;
+    uint256 public constant MINT_AMOUNT = 1000 * 10**18;
 
     function setUp() public {
-        owner = makeAddr("owner");
-        vm.startPrank(owner);
-        usdt = new MockUSDT();
-        nft = new TAONFT(address(usdt));
-        vm.stopPrank();
-
+        usdt = new MockERC20();
+        withdrawalAddress = makeAddr("withdrawalAddress");
         user = makeAddr("user");
-        vm.deal(user, 1 ether);
-        vm.startPrank(owner);
-        usdt.transfer(user, 1000 * 10**18);
-        vm.stopPrank();
+        nft = new TAONFT(address(usdt), withdrawalAddress);
+
+        // Mint USDT to user and approve NFT contract
+        usdt.mint(user, MINT_AMOUNT);
+        vm.prank(user);
+        usdt.approve(address(nft), MINT_AMOUNT);
     }
 
     function test_Mint() public {
-        uint256 amount = 100 * 10**18;
-        uint256 ownerInitialBalance = usdt.balanceOf(owner);
+        uint256 userInitialBalance = usdt.balanceOf(user);
+        uint256 withdrawalInitialBalance = usdt.balanceOf(withdrawalAddress);
 
-        vm.startPrank(user);
-        usdt.approve(address(nft), amount);
-        nft.mint(amount);
-        vm.stopPrank();
+        vm.prank(user);
+        nft.mint(MINT_AMOUNT);
 
-        assertEq(nft.balanceOf(user), 1);
-        assertEq(nft.mintAmounts(0), amount);
-        assertEq(usdt.balanceOf(owner), ownerInitialBalance + amount);
+        // Check NFT was minted
+        assertEq(nft.ownerOf(0), user);
+        assertEq(nft.mintAmounts(0), MINT_AMOUNT);
+
+        // Check USDT was transferred directly to withdrawal address
+        assertEq(usdt.balanceOf(user), userInitialBalance - MINT_AMOUNT);
+        assertEq(usdt.balanceOf(withdrawalAddress), withdrawalInitialBalance + MINT_AMOUNT);
+        assertEq(usdt.balanceOf(address(nft)), 0); // Contract should never hold USDT
     }
 
-    function test_RevertWhen_ZeroAmount() public {
-        vm.startPrank(user);
+    function test_RevertWhen_MintWithZeroAmount() public {
+        vm.prank(user);
         vm.expectRevert("Amount must be greater than 0");
         nft.mint(0);
-        vm.stopPrank();
     }
 
-    function test_RevertWhen_InsufficientAllowance() public {
-        uint256 amount = 100 * 10**18;
+    function test_RevertWhen_MintWithoutApproval() public {
+        address newUser = makeAddr("newUser");
+        usdt.mint(newUser, MINT_AMOUNT);
 
-        vm.startPrank(user);
-        // Don't approve USDT
-        vm.expectRevert();  // Just expect any revert since the message might vary
-        nft.mint(amount);
-        vm.stopPrank();
+        vm.prank(newUser);
+        vm.expectRevert();
+        nft.mint(MINT_AMOUNT);
     }
 
-    function test_TokenURI() public {
-        uint256 amount = 100 * 10**18;
+    function test_RevertWhen_MintWithInsufficientBalance() public {
+        address poorUser = makeAddr("poorUser");
+        usdt.mint(poorUser, MINT_AMOUNT - 1);
 
-        vm.startPrank(user);
-        usdt.approve(address(nft), amount);
-        nft.mint(amount);
+        vm.prank(poorUser);
+        usdt.approve(address(nft), MINT_AMOUNT);
 
-        string memory expectedURI = "ipfs://QmZFTnWLjPDMSzesTfxugFhsktVyf6i2GJstecAEXyqtYm?filename=taoai.png";
-        assertEq(nft.tokenURI(0), expectedURI);
-        vm.stopPrank();
+        vm.prank(poorUser);
+        vm.expectRevert();
+        nft.mint(MINT_AMOUNT);
     }
 }

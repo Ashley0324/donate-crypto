@@ -11,3 +11,4 @@ solc = "0.8.20"
 
 [rpc_endpoints]
 bsc = "${BSC_RPC_URL}"
+bsc_testnet = "${BSC_TESTNET_RPC_URL}"
