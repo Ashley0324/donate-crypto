@@ -41,8 +41,8 @@ export default function DonatePage() {
       await tx.wait()
 
       toast({
-        title: "捐赠成功",
-        description: `感谢您捐赠 ${amount} USDT`,
+        title: "支付成功",
+        description: `感谢您支付 ${amount} USDT`,
       })
 
       router.push(`/thank-you?amount=${encodeURIComponent(amount)}`)
@@ -58,7 +58,7 @@ export default function DonatePage() {
 
       toast({
         variant: "destructive",
-        title: "捐赠失败",
+        title: "支付失败",
         description: errorMessage,
       })
     } finally {
@@ -68,7 +68,7 @@ export default function DonatePage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 text-center bg-[#000000]">
-      <h1 className="text-3xl md:text-4xl font-bold text-[#ffffff] mb-8">捐赠 USDT</h1>
+      <h1 className="text-3xl md:text-4xl font-bold text-[#ffffff] mb-8">支付 USDT</h1>
       <form
         onSubmit={(e) => {
           e.preventDefault()
