@@ -8,7 +8,7 @@ const geist = Geist({
 })
 
 export const metadata: Metadata = {
-  title: "TAO AI Agent",
+  title: "TAO",
   description: "Build the Next Generation AI Agent with TAO",
 }
 
