@@ -15,4 +15,5 @@
 /public/sitemap.xml
 /.next
 .env
+.env*
 run-*.json

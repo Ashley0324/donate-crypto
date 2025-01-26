@@ -43,7 +43,10 @@ forge build
 
 2. 部署合约
 ```bash
-forge script script/DeployTAONFT.s.sol --rpc-url bsc --broadcast
+forge script script/DeployTAONFT.s.sol --rpc-url bsc --broadcast --verify \
+    --etherscan-api-key $BSCSCAN_API_KEY \
+    --verifier etherscan \
+    --verifier-url https://api.bscscan.com/api
 ```
 
 部署成功后，你会在控制台看到以下信息：

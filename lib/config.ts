@@ -22,7 +22,7 @@ const ALL_NETWORKS = {
         rpcUrl: 'https://bsc-dataseed.binance.org/',
         blockExplorer: 'https://bscscan.com',
         usdtAddress: '0x55d398326f99059fF775485246999027B3197955',
-        nftAddress: '0xaEbAfCa968c845bD69206Ba3c61cFbf59D123A23'
+        nftAddress: '0xA085ce18AbdfA8945D817542F2Aa2C5304b7eD1a'
     },
     testnet: {
         name: 'BSC Testnet',
